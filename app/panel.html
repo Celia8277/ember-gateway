@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ember Gateway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0a14;
+  --bg-card: #12121f;
+  --bg-card-hover: #181830;
+  --bg-input: #0e0e1a;
+  --ember: #e94560;
+  --ember-glow: #ff6b81;
+  --ember-dim: #8b2a3a;
+  --amber: #f0a030;
+  --amber-dim: #a07020;
+  --convex-purple: #8b5cf6;
+  --green: #34d399;
+  --green-dim: #1a6b4d;
+  --red: #f87171;
+  --text: #e8e6e3;
+  --text-dim: #6b7280;
+  --text-muted: #4a4f5c;
+  --border: #1e1e32;
+  --border-light: #2a2a42;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { 
+  font-size: 15px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Noto Sans SC', -apple-system, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== Toast ===== */
+#toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  padding: 12px 20px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; color: white;
+  animation: slideIn .3s ease, fadeOut .3s ease 2.7s forwards;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+.toast.ok { background: linear-gradient(135deg, #059669, #10b981); }
+.toast.err { background: linear-gradient(135deg, #dc2626, #f87171); }
+.toast.info { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+/* ===== Header ===== */
+.header {
+  padding: 20px 16px 0;
+  max-width: 800px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 600;
+  background: linear-gradient(135deg, var(--ember), var(--amber));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header .logout-btn {
+  background: none; border: 1px solid var(--border-light);
+  color: var(--text-dim); padding: 6px 14px; border-radius: 6px;
+  font-size: 12px; cursor: pointer; transition: all .2s;
+}
+.header .logout-btn:hover { border-color: var(--ember); color: var(--ember); }
+
+/* ===== Tabs ===== */
+.tabs {
+  display: flex; gap: 0; padding: 16px 16px 0;
+  max-width: 800px; margin: 0 auto;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex-shrink: 0;
+  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  color: var(--text-dim); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .2s; white-space: nowrap;
+  background: none; border-top: none; border-left: none; border-right: none;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--ember);
+  border-bottom-color: var(--ember);
+}
+
+/* ===== Content ===== */
+.content {
+  max-width: 800px; margin: 0 auto;
+  padding: 16px;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+  transition: border-color .2s;
+}
+.card:hover { border-color: var(--border-light); }
+.card-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: .5px; margin-bottom: 12px;
+}
+
+/* ===== Status Grid ===== */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.stat-box {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+}
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6rem; font-weight: 600;
+  color: var(--ember);
+}
+.stat-label {
+  font-size: 11px; color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* ===== Connection badges ===== */
+.conn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.conn-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border);
+}
+.conn-badge .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.conn-badge.ok .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.conn-badge.err .dot { background: var(--red); }
+.conn-badge.warn .dot { background: var(--amber); }
+
+/* ===== Memory Dimension Cards ===== */
+.dim-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+  position: relative;
+}
+.dim-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.dim-label { font-size: 15px; font-weight: 600; }
+.dim-meta { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+.dim-preview {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 10px; margin: 8px 0;
+  font-size: 12px; color: var(--text-dim);
+  max-height: 120px; overflow-y: auto;
+  white-space: pre-wrap; word-break: break-all;
+  line-height: 1.6;
+}
+.dim-actions {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+.dim-input {
+  flex: 1; padding: 8px 12px;
+  background: var(--bg-input); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; outline: none;
+}
+.dim-input:focus { border-color: var(--ember); }
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; color: white;
+  transition: all .15s;
+}
+.btn:active { transform: scale(.96); }
+.btn-ember { background: var(--ember); }
+.btn-ember:hover { background: var(--ember-glow); }
+.btn-blue { background: #3b82f6; }
+.btn-blue:hover { background: #60a5fa; }
+.btn-ghost {
+  background: none; border: 1px solid var(--border-light);
+  color: var(--text-dim);
+}
+.btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+.btn-danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: white; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ===== Provider Cards ===== */
+.provider-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px; margin-bottom: 10px;
+  transition: all .2s;
+}
+.provider-card.active-provider { border-color: var(--green-dim); }
+.provider-name {
+  font-weight: 600; font-size: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.provider-detail {
+  font-size: 12px; color: var(--text-dim);
+  margin-top: 6px; font-family: 'JetBrains Mono', monospace;
+  line-height: 1.8;
+}
+
+/* ===== Input Groups ===== */
+.input-group { margin-bottom: 10px; }
+.input-group label {
+  display: block; font-size: 12px; color: var(--text-dim);
+  margin-bottom: 4px; font-weight: 500;
+}
+.input-group input, .input-group textarea {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg-input); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; outline: none;
+  font-family: 'JetBrains Mono', monospace;
+}
+.input-group input:focus, .input-group textarea:focus { border-color: var(--ember); }
+
+/* ===== Convex Search ===== */
+.search-result {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 12px; margin-top: 8px;
+  border-left: 3px solid var(--convex-purple);
+}
+.search-result .score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--convex-purple);
+}
+.search-result .content {
+  font-size: 13px; margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ===== Confirm Modal ===== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.6); z-index: 999;
+  justify-content: center; align-items: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  max-width: 360px; width: 90%; text-align: center;
+}
+.modal p { margin-bottom: 20px; font-size: 14px; }
+.modal .btns { display: flex; gap: 10px; justify-content: center; }
+
+/* ===== Loading Skeleton ===== */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-input) 25%, var(--bg-card) 50%, var(--bg-input) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+  height: 40px; margin-bottom: 8px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ===== Mobile ===== */
+@media (max-width: 480px) {
+  html { font-size: 14px; }
+  .header h1 { font-size: 1.2rem; }
+  .status-grid { grid-template-columns: repeat(2, 1fr); }
+  .tab { padding: 10px 12px; font-size: 12px; }
+  .dim-actions { flex-direction: column; }
+  .dim-actions .dim-input { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="header">
+  <h1>🔥 Ember Gateway</h1>
+  <button class="logout-btn" onclick="location.href='/admin/logout'">退出</button>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="overview">总览</button>
+  <button class="tab" data-tab="memory">记忆</button>
+  <button class="tab" data-tab="convex">向量</button>
+  <button class="tab" data-tab="providers">API</button>
+  <button class="tab" data-tab="tools">工具</button>
+</div>
+
+<div class="content">
+
+<!-- ==================== 总览 ==================== -->
+<div class="panel active" id="panel-overview">
+  <div class="card">
+    <div class="card-title">系统状态</div>
+    <div class="status-grid" id="status-grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+    <div class="conn-row" id="conn-row"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">当前配置</div>
+    <div id="current-config" style="font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2;color:var(--text-dim)">
+      加载中...
+    </div>
+  </div>
+  <div class="card" id="gateway-key-card" style="display:none">
+    <div class="card-title">🔑 网关 API Key</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green)" id="gateway-key-display"></div>
+    <div style="font-size:11px;color:var(--text-dim);margin-top:6px">RikkaHub 等客户端的 API Key 字段填这个</div>
+  </div>
+</div>
+
+<!-- ==================== 记忆 ==================== -->
+<div class="panel" id="panel-memory">
+  <div id="dim-container">
+    <div class="skeleton" style="height:140px"></div>
+    <div class="skeleton" style="height:140px"></div>
+    <div class="skeleton" style="height:140px"></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">对话摘要</div>
+    <div id="summary-preview" class="dim-preview" style="max-height:200px">加载中...</div>
+  </div>
+</div>
+
+<!-- ==================== 向量记忆 ==================== -->
+<div class="panel" id="panel-convex">
+  <div class="card">
+    <div class="card-title">🔮 Convex 向量记忆</div>
+    <div class="status-grid" id="convex-stats">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">语义搜索</div>
+    <div style="display:flex;gap:8px">
+      <input class="dim-input" id="semantic-query" placeholder="输入关键词或句子，搜索相关记忆..." style="flex:1">
+      <button class="btn btn-ember" onclick="doSemanticSearch()">搜索</button>
+    </div>
+    <div id="search-results" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- ==================== API Provider ==================== -->
+<div class="panel" id="panel-providers">
+  <div id="providers-list">
+    <div class="skeleton" style="height:80px"></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">添加 / 编辑 Provider</div>
+    <div class="input-group"><label>名称</label><input id="p-name" placeholder="如: openrouter"></div>
+    <div class="input-group"><label>API URL</label><input id="p-url" placeholder="如: https://openrouter.ai/api/v1"></div>
+    <div class="input-group"><label>API Key</label><input id="p-key" type="password" placeholder="sk-xxx"></div>
+    <div class="input-group"><label>模型</label><input id="p-model" placeholder="如: claude-sonnet-4-20250514"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-ember" onclick="addProvider()">保存</button>
+      <button class="btn btn-blue" onclick="testProvider()">测试连接</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚡ 快速修改当前配置</div>
+    <div class="input-group"><label>API URL（留空不改）</label><input id="q-url"></div>
+    <div class="input-group"><label>API Key（留空不改）</label><input id="q-key" type="password"></div>
+    <div class="input-group"><label>模型（留空不改）</label><input id="q-model"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-ember" onclick="quickUpdate()">立即生效</button>
+      <button class="btn btn-blue" onclick="testCurrent()">测试当前</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 工具 ==================== -->
+<div class="panel" id="panel-tools">
+  <div class="card">
+    <div class="card-title">手动触发</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button class="btn btn-ember" onclick="triggerSummarize()">🧠 立即总结</button>
+      <button class="btn btn-blue" onclick="testCurrent()">📡 测试 API</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Redis 查询</div>
+    <div style="display:flex;gap:8px">
+      <input class="dim-input" id="redis-key" placeholder="输入 Redis key，如: ember:system_prompt" style="flex:1">
+      <button class="btn btn-ghost" onclick="queryRedis()">查询</button>
+    </div>
+    <div id="redis-result" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">R2 存档浏览</div>
+    <div style="display:flex;gap:8px">
+      <input class="dim-input" id="r2-prefix" placeholder="前缀，如: messages/ 或 summaries/" value="summaries/" style="flex:1">
+      <button class="btn btn-ghost" onclick="listR2()">查看</button>
+    </div>
+    <div id="r2-result" style="margin-top:8px"></div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- ===== Confirm Modal ===== -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <p id="confirm-text">确定要执行此操作吗？</p>
+    <div class="btns">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-danger" id="confirm-btn">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Toast =====
+function toast(msg, type='ok') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ===== API Helper =====
+async function api(path, opts={}) {
+  try {
+    const r = await fetch(path, {
+      ...opts,
+      headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    if (r.status === 401) {
+      location.href = '/admin/login';
+      return null;
+    }
+    return await r.json();
+  } catch(e) {
+    toast('请求失败: ' + e.message, 'err');
+    return null;
+  }
+}
+
+// ===== Tabs =====
+document.getElementById('tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  // Lazy load
+  if (tab.dataset.tab === 'convex') loadConvex();
+  if (tab.dataset.tab === 'providers') loadProviders();
+});
+
+// ===== 总览 =====
+async function loadOverview() {
+  // Config
+  const cfg = await api('/admin/config');
+  if (!cfg || cfg.error) {
+    document.getElementById('current-config').textContent = '⚠️ 加载失败（Redis 可能未连接）';
+    return;
+  }
+  const c = cfg.current;
+  document.getElementById('current-config').innerHTML = 
+    `<div>📡 <span style="color:var(--text)">${c.api_url}</span></div>` +
+    `<div>🤖 <span style="color:var(--amber)">${c.model}</span></div>` +
+    `<div>🔑 <span style="color:var(--text-muted)">${c.api_key}</span></div>`;
+
+  // Memory status
+  const mem = await api('/admin/memory');
+  if (mem && !mem.error) {
+    const dims = mem.memory_dimensions || {};
+    const totalDimLen = Object.values(dims).reduce((s,d) => s + d.length, 0);
+    document.getElementById('status-grid').innerHTML = `
+      <div class="stat-box"><div class="stat-value">${mem.message_count}</div><div class="stat-label">消息总数</div></div>
+      <div class="stat-box"><div class="stat-value">${mem.next_summary_at - mem.message_count}</div><div class="stat-label">下次总结</div></div>
+      <div class="stat-box"><div class="stat-value">${(mem.conversation_summary_length/1000).toFixed(1)}k</div><div class="stat-label">摘要长度</div></div>
+      <div class="stat-box"><div class="stat-value">${(totalDimLen/1000).toFixed(1)}k</div><div class="stat-label">记忆总量</div></div>
+    `;
+    // Connection badges
+    const badges = [
+      { label: 'Redis', ok: !mem.error },
+      { label: 'R2', ok: mem.r2_enabled },
+      { label: 'Convex', ok: mem.convex_enabled },
+    ];
+    document.getElementById('conn-row').innerHTML = badges.map(b =>
+      `<div class="conn-badge ${b.ok?'ok':'err'}"><span class="dot"></span>${b.label}</div>`
+    ).join('');
+  } else {
+    document.getElementById('status-grid').innerHTML = '<div style="color:var(--red);grid-column:1/-1">⚠️ Redis 未连接，无法获取状态</div>';
+    document.getElementById('conn-row').innerHTML = '<div class="conn-badge err"><span class="dot"></span>Redis 离线</div>';
+  }
+
+  // Gateway key
+  const root = await fetch('/').then(r=>r.json()).catch(()=>null);
+  if (root && root.auth_required) {
+    // We don't expose the full key in the API for security, show indicator
+    document.getElementById('gateway-key-card').style.display = 'block';
+    document.getElementById('gateway-key-display').textContent = '已配置（查看 .env 文件获取完整 Key）';
+  }
+}
+
+// ===== 记忆 =====
+async function loadMemory() {
+  const data = await api('/admin/dimensions');
+  if (!data || data.error) {
+    document.getElementById('dim-container').innerHTML = `<div class="card" style="color:var(--red)">⚠️ ${data?.error || '加载失败'}</div>`;
+    return;
+  }
+  const dims = data.dimensions;
+  const icons = { emotional: '💕', projects: '🔧', learning: '📚' };
+  const colors = { emotional: '#f472b6', projects: '#60a5fa', learning: '#34d399' };
+
+  let html = '';
+  for (const [key, dim] of Object.entries(dims)) {
+    const preview = dim.content ? dim.content.slice(-500) : '（空）';
+    html += `
+    <div class="dim-card" style="border-left:3px solid ${colors[key]}">
+      <div class="dim-header">
+        <div class="dim-label">${icons[key]} ${dim.label}</div>
+        <div class="dim-meta">${dim.length} 字符</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${dim.desc}</div>
+      <div class="dim-preview">${escHtml(preview)}</div>
+      <div class="dim-actions">
+        <input class="dim-input" id="dim-input-${key}" placeholder="追加新记忆...">
+        <button class="btn btn-ember btn-sm" onclick="appendDim('${key}')">追加</button>
+        <button class="btn btn-ghost btn-sm" onclick="editDim('${key}')">编辑</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmClear('${key}')">清空</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('dim-container').innerHTML = html;
+
+  // Summary
+  const summaryData = await api('/admin/redis/get?key=ember:conversation_summary');
+  if (summaryData && summaryData.value) {
+    const val = summaryData.value;
+    document.getElementById('summary-preview').textContent = val.slice(-800) || '（空）';
+  } else {
+    document.getElementById('summary-preview').textContent = '（暂无摘要）';
+  }
+}
+
+async function appendDim(dim) {
+  const input = document.getElementById('dim-input-' + dim);
+  const content = input.value.trim();
+  if (!content) return;
+  const r = await api('/admin/dimensions/update', { method: 'POST', body: { dimension: dim, content, append: true } });
+  if (r && r.status === 'ok') {
+    toast('记忆已追加');
+    input.value = '';
+    loadMemory();
+  } else {
+    toast(r?.error || '追加失败', 'err');
+  }
+}
+
+async function editDim(dim) {
+  const data = await api('/admin/dimensions');
+  if (!data) return;
+  const current = data.dimensions[dim]?.content || '';
+  const newContent = prompt(data.dimensions[dim].label + ' — 编辑完整内容:', current);
+  if (newContent === null) return;
+  const r = await api('/admin/dimensions/update', { method: 'POST', body: { dimension: dim, content: newContent, append: false } });
+  if (r && r.status === 'ok') {
+    toast('记忆已更新');
+    loadMemory();
+  }
+}
+
+function confirmClear(dim) {
+  document.getElementById('confirm-text').textContent = `确定要清空 ${dim} 维度的记忆吗？此操作不可撤销。`;
+  document.getElementById('confirm-btn').onclick = async () => {
+    const r = await api('/admin/dimensions/clear', { method: 'POST', body: { dimension: dim } });
+    if (r && r.status === 'ok') toast('已清空');
+    else toast(r?.error || '清空失败', 'err');
+    closeModal();
+    loadMemory();
+  };
+  document.getElementById('confirm-modal').classList.add('show');
+}
+function closeModal() { document.getElementById('confirm-modal').classList.remove('show'); }
+
+// ===== Convex =====
+async function loadConvex() {
+  const stats = await api('/api/convex/stats');
+  if (!stats || stats.error) {
+    document.getElementById('convex-stats').innerHTML = `<div style="color:var(--red);grid-column:1/-1">⚠️ ${stats?.error || 'Convex 未连接'}</div>`;
+    return;
+  }
+  const byDim = stats.byDimension || {};
+  document.getElementById('convex-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-value" style="color:var(--convex-purple)">${stats.totalMemories || 0}</div><div class="stat-label">总记忆</div></div>
+    <div class="stat-box"><div class="stat-value" style="color:var(--convex-purple)">${stats.totalSummaries || 0}</div><div class="stat-label">总摘要</div></div>
+    <div class="stat-box"><div class="stat-value" style="color:var(--convex-purple)">${stats.pinnedCount || 0}</div><div class="stat-label">已置顶</div></div>
+    <div class="stat-box"><div class="stat-value" style="color:#f472b6">${byDim.emotional || 0}</div><div class="stat-label">💕 情感</div></div>
+    <div class="stat-box"><div class="stat-value" style="color:#60a5fa">${byDim.projects || 0}</div><div class="stat-label">🔧 项目</div></div>
+    <div class="stat-box"><div class="stat-value" style="color:#34d399">${byDim.learning || 0}</div><div class="stat-label">📚 学习</div></div>
+  `;
+}
+
+async function doSemanticSearch() {
+  const q = document.getElementById('semantic-query').value.trim();
+  if (!q) return;
+  const container = document.getElementById('search-results');
+  container.innerHTML = '<div class="skeleton" style="height:60px"></div>';
+  const r = await api('/api/semantic-search', { method: 'POST', body: { query: q, limit: 8 } });
+  if (!r || r.error) {
+    container.innerHTML = `<div style="color:var(--red)">⚠️ ${r?.error || '搜索失败'}</div>`;
+    return;
+  }
+  if (!r.results || r.results.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-dim)">没有找到相关记忆</div>';
+    return;
+  }
+  const icons = { emotional: '💕', projects: '🔧', learning: '📚' };
+  container.innerHTML = r.results.map(m => {
+    const score = (m._score * 100).toFixed(0);
+    const dim = icons[m.dimension] || '📝';
+    const ts = m.createdAt ? new Date(m.createdAt).toLocaleDateString('zh-CN') : '';
+    return `<div class="search-result">
+      <div class="score">${dim} 相关度 ${score}% ${ts ? '· ' + ts : ''}</div>
+      <div class="content">${escHtml(m.content)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== Providers =====
+async function loadProviders() {
+  const data = await api('/admin/providers');
+  if (!data || data.error) {
+    document.getElementById('providers-list').innerHTML = `<div class="card" style="color:var(--red)">⚠️ 加载失败</div>`;
+    return;
+  }
+  if (!data.providers?.length) {
+    document.getElementById('providers-list').innerHTML = '<div class="card" style="color:var(--text-dim)">暂无 Provider</div>';
+    return;
+  }
+  document.getElementById('providers-list').innerHTML = data.providers.map(p => `
+    <div class="provider-card ${p.active ? 'active-provider' : ''}">
+      <div class="provider-name">
+        ${p.active ? '🟢' : '⚪'} ${p.name}
+        ${p.active ? '<span style="font-size:11px;color:var(--green);font-weight:400">当前使用</span>' : ''}
+      </div>
+      <div class="provider-detail">
+        URL: ${p.api_url}<br>
+        Model: ${p.model}<br>
+        Key: ${p.api_key}
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        ${!p.active ? `<button class="btn btn-ember btn-sm" onclick="switchProvider('${escAttr(p.name)}')">切换</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="removeProvider('${escAttr(p.name)}')">删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function switchProvider(name) {
+  const r = await api('/admin/config', { method: 'POST', body: { switch_to: name } });
+  if (r && r.status === 'ok') {
+    toast('已切换到 ' + name);
+    loadProviders();
+    loadOverview();
+  } else {
+    toast(r?.error || '切换失败', 'err');
+  }
+}
+
+async function removeProvider(name) {
+  if (!confirm('确定删除 ' + name + '？')) return;
+  const r = await api('/admin/providers/remove', { method: 'POST', body: { name } });
+  if (r && r.status === 'ok') { toast('已删除'); loadProviders(); }
+  else toast(r?.error || '删除失败', 'err');
+}
+
+async function addProvider() {
+  const body = {
+    name: document.getElementById('p-name').value,
+    api_url: document.getElementById('p-url').value,
+    api_key: document.getElementById('p-key').value,
+    model: document.getElementById('p-model').value,
+  };
+  if (!body.name || !body.api_url || !body.api_key || !body.model) {
+    toast('请填写所有字段', 'err'); return;
+  }
+  const r = await api('/admin/providers/add', { method: 'POST', body });
+  if (r && r.status === 'ok') {
+    toast(r.message);
+    ['p-name','p-url','p-key','p-model'].forEach(id => document.getElementById(id).value = '');
+    loadProviders();
+  } else {
+    toast(r?.error || '添加失败', 'err');
+  }
+}
+
+async function testProvider() {
+  const body = {
+    api_url: document.getElementById('p-url').value,
+    api_key: document.getElementById('p-key').value,
+    model: document.getElementById('p-model').value,
+  };
+  toast('测试中...', 'info');
+  const r = await api('/admin/config/test', { method: 'POST', body });
+  if (r?.status === 'ok') toast('✅ 连接成功: ' + (r.test_reply || ''));
+  else toast('❌ ' + (r?.message || '连接失败'), 'err');
+}
+
+async function quickUpdate() {
+  const body = {};
+  const url = document.getElementById('q-url').value;
+  const key = document.getElementById('q-key').value;
+  const model = document.getElementById('q-model').value;
+  if (url) body.api_url = url;
+  if (key) body.api_key = key;
+  if (model) body.model = model;
+  if (!Object.keys(body).length) { toast('至少填一个字段', 'err'); return; }
+  const r = await api('/admin/config', { method: 'POST', body });
+  if (r?.status === 'ok') {
+    toast('配置已更新');
+    ['q-url','q-key','q-model'].forEach(id => document.getElementById(id).value = '');
+    loadOverview();
+  } else {
+    toast(r?.error || '更新失败', 'err');
+  }
+}
+
+async function testCurrent() {
+  toast('测试中...', 'info');
+  const r = await api('/admin/config/test', { method: 'POST', body: {} });
+  if (r?.status === 'ok') toast('✅ 连接成功: ' + (r.test_reply || ''));
+  else toast('❌ ' + (r?.message || '连接失败'), 'err');
+}
+
+// ===== Tools =====
+async function triggerSummarize() {
+  toast('触发总结中...', 'info');
+  const r = await api('/admin/summarize', { method: 'POST' });
+  if (r?.status === 'ok') { toast('总结已完成'); loadOverview(); loadMemory(); }
+  else toast(r?.error || '总结失败', 'err');
+}
+
+async function queryRedis() {
+  const key = document.getElementById('redis-key').value.trim();
+  if (!key) return;
+  const r = await api('/admin/redis/get?key=' + encodeURIComponent(key));
+  const el = document.getElementById('redis-result');
+  if (r && r.value !== undefined) {
+    el.innerHTML = `<div class="dim-preview" style="max-height:200px">${escHtml(r.value || '（空值）')}</div>`;
+  } else {
+    el.innerHTML = `<div style="color:var(--text-dim)">未找到或查询失败</div>`;
+  }
+}
+
+async function listR2() {
+  const prefix = document.getElementById('r2-prefix').value.trim();
+  const r = await api('/admin/r2/list?prefix=' + encodeURIComponent(prefix) + '&limit=30');
+  const el = document.getElementById('r2-result');
+  if (r?.error) { el.innerHTML = `<div style="color:var(--red)">${r.error}</div>`; return; }
+  if (!r?.files?.length) { el.innerHTML = '<div style="color:var(--text-dim)">无文件</div>'; return; }
+  el.innerHTML = r.files.map(f => 
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escAttr(f.key)}">${escHtml(f.key)}</div>
+      <span style="font-size:11px;color:var(--text-muted);flex-shrink:0">${f.size}B</span>
+      <button class="btn btn-ghost btn-sm" style="flex-shrink:0;padding:3px 8px;font-size:11px" onclick="readR2('${escAttr(f.key)}')">查看</button>
+      <button class="btn btn-danger btn-sm" style="flex-shrink:0;padding:3px 8px;font-size:11px" onclick="deleteR2('${escAttr(f.key)}')">删</button>
+    </div>`
+  ).join('');
+}
+
+async function readR2(key) {
+  const r = await api('/admin/r2/read?key=' + encodeURIComponent(key));
+  if (r?.error) { toast(r.error, 'err'); return; }
+  // Show in a modal-like area
+  const el = document.getElementById('r2-result');
+  const content = r.content || '';
+  let display = content;
+  try { display = JSON.stringify(JSON.parse(content), null, 2); } catch(e) {}
+  el.innerHTML = `
+    <div class="card" style="margin-top:8px;border-color:var(--amber)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--amber)">${escHtml(key)}</div>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="listR2()">返回列表</button>
+      </div>
+      <div class="dim-preview" style="max-height:400px;font-size:12px">${escHtml(display)}</div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="copyR2Content()">复制内容</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteR2('${escAttr(key)}')">删除此文件</button>
+      </div>
+    </div>`;
+  // Store content for copy
+  window._r2Content = content;
+}
+
+function copyR2Content() {
+  if (window._r2Content) {
+    navigator.clipboard.writeText(window._r2Content).then(() => toast('已复制')).catch(() => toast('复制失败', 'err'));
+  }
+}
+
+async function deleteR2(key) {
+  if (!confirm('确定删除 ' + key + '？此操作不可撤销。')) return;
+  const r = await api('/admin/r2/delete', { method: 'POST', body: { key } });
+  if (r?.status === 'ok') { toast('已删除 ' + key); listR2(); }
+  else toast(r?.error || '删除失败', 'err');
+}
+
+// ===== Utils =====
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+// ===== Init =====
+loadOverview();
+loadMemory();
+</script>
+
+</body>
+</html>
