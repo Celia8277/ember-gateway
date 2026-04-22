@@ -1,0 +1,2295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FAF7F2">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" crossorigin="use-credentials">
+<title>燃 - Ember</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #FAF7F2;
+  --bg-warm: #F5F0E8;
+  --surface: #FFFFFF;
+  --surface-2: #F7F3EC;
+  --surface-3: #EDE8DF;
+  --amber: #EF9F27;
+  --amber-deep: #BA7517;
+  --amber-light: #F5C563;
+  --amber-soft: rgba(239,159,39,0.10);
+  --amber-border: rgba(239,159,39,0.25);
+  --green: #4abb7a;
+  --green-soft: rgba(74,187,122,0.10);
+  --green-border: rgba(74,187,122,0.3);
+  --red: #e25555;
+  --purple: #8b7ec8;
+  --text: #2c2416;
+  --text-secondary: #7a6e5d;
+  --text-muted: #b0a692;
+  --border: rgba(186,117,23,0.12);
+  --border-light: rgba(186,117,23,0.06);
+  --shadow-sm: 0 1px 3px rgba(120,80,20,0.06);
+  --shadow-md: 0 4px 12px rgba(120,80,20,0.08);
+  --shadow-lg: 0 8px 30px rgba(120,80,20,0.12);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --input-height: 0px;
+}
+
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(186,117,23,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(186,117,23,0.35); }
+
+/* ===== APP LAYOUT ===== */
+#app {
+  display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
+  max-width: 768px; margin: 0 auto;
+  position: relative; overflow: hidden;
+  background: var(--bg);
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  padding-top: calc(10px + var(--safe-top));
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-light);
+  z-index: 100;
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+
+.header-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--amber) 0%, var(--amber-deep) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 0 3px rgba(239,159,39,0.15), var(--shadow-sm);
+  animation: avatarGlow 4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes avatarGlow {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(239,159,39,0.15), 0 0 12px rgba(239,159,39,0.15); }
+  50% { box-shadow: 0 0 0 4px rgba(239,159,39,0.2), 0 0 20px rgba(239,159,39,0.25); }
+}
+
+.header-info { display: flex; flex-direction: column; }
+.header-name {
+  font-size: 17px; font-weight: 700;
+  color: var(--text);
+}
+.header-model-tag {
+  font-size: 11px; color: var(--text-muted);
+  &::before { content: '· '; }
+}
+.header-status {
+  font-size: 11px; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 5px;
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green); display: inline-block;
+  flex-shrink: 0;
+}
+.status-dot.offline { background: var(--red); }
+.status-dot.streaming { background: var(--amber); animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+
+.header-right { display: flex; align-items: center; gap: 4px; }
+.header-btn {
+  background: none; border: none; color: var(--text-secondary);
+  font-size: 18px; padding: 6px; cursor: pointer;
+  border-radius: 8px; transition: all 0.2s;
+  position: relative;
+}
+.header-btn:hover { color: var(--amber); background: var(--amber-soft); }
+.pending-badge {
+  position: absolute; top: 2px; right: 2px;
+  background: var(--amber); color: white; font-size: 10px;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; padding: 0 4px;
+}
+.mood-indicator { font-size: 16px; cursor: pointer; }
+
+/* ===== CHAT AREA ===== */
+.chat-container {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 12px 12px 8px;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+}
+
+/* ===== WELCOME ===== */
+.welcome {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%; padding: 40px 20px;
+  text-align: center; user-select: none;
+  animation: welcomeFadeIn 1s ease;
+}
+@keyframes welcomeFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.welcome-fire {
+  font-size: 64px;
+  animation: fireFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 20px rgba(239,159,39,0.35));
+  margin-bottom: 20px;
+}
+@keyframes fireFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.welcome-title {
+  font-size: 26px; font-weight: 300;
+  color: var(--text); margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.welcome-sub {
+  font-size: 17px; color: var(--text-secondary);
+  font-weight: 300;
+  animation: breathe 4s ease-in-out infinite;
+}
+@keyframes breathe { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+/* ===== MESSAGES ===== */
+.message {
+  display: flex; margin-bottom: 6px;
+  animation: msgIn 0.3s ease;
+  max-width: 100%;
+  position: relative;
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(6px); } }
+
+.message.user { justify-content: flex-end; }
+.message.assistant { justify-content: flex-start; }
+.message.system { justify-content: center; }
+
+.msg-wrapper {
+  max-width: 85%;
+  position: relative;
+}
+
+.msg-bubble {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  line-height: 1.65; font-size: 15px;
+  word-wrap: break-word; overflow-wrap: break-word;
+  position: relative;
+}
+
+.message.user .msg-bubble {
+  background: linear-gradient(135deg, var(--amber) 0%, var(--amber-deep) 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.message.assistant .msg-bubble {
+  background: var(--surface);
+  border: 0.5px solid var(--amber-border);
+  border-bottom-left-radius: 4px;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.message.system .msg-bubble {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 4px 12px;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* ===== MESSAGE ACTION BAR ===== */
+.msg-actions {
+  display: flex; align-items: center; gap: 2px;
+  padding: 2px 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+  height: 24px;
+}
+.message:hover .msg-actions,
+.message:focus-within .msg-actions,
+.msg-actions.visible { opacity: 1; }
+
+.message.user .msg-actions { justify-content: flex-end; }
+
+.msg-action-btn {
+  background: none; border: none;
+  color: var(--text-muted); cursor: pointer;
+  font-size: 13px; padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 3px;
+  line-height: 1;
+}
+.msg-action-btn:hover { color: var(--amber); background: var(--amber-soft); }
+.msg-action-btn.playing { color: var(--amber); animation: blink 0.8s infinite; }
+
+.msg-time-label {
+  font-size: 10px; color: var(--text-muted);
+  padding: 0 4px; line-height: 1;
+  display: inline-flex; align-items: center;
+}
+
+/* Markdown inside bubbles */
+.msg-bubble p { margin: 0 0 8px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble ul, .msg-bubble ol { margin: 4px 0 8px 18px; }
+.msg-bubble li { margin-bottom: 2px; }
+.msg-bubble strong { font-weight: 600; }
+.msg-bubble em { font-style: italic; }
+.msg-bubble a { color: var(--amber-deep); text-decoration: none; }
+.msg-bubble a:hover { text-decoration: underline; }
+.message.user .msg-bubble a { color: rgba(255,255,255,0.85); text-decoration: underline; }
+.msg-bubble blockquote {
+  border-left: 3px solid var(--amber); margin: 8px 0;
+  padding: 4px 12px; color: var(--text-secondary);
+  background: var(--amber-soft); border-radius: 0 8px 8px 0;
+}
+.msg-bubble code:not(pre code) {
+  background: rgba(139,126,200,0.1); color: var(--purple);
+  padding: 1px 5px; border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+.message.user .msg-bubble code:not(pre code) {
+  background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.95);
+}
+.msg-bubble pre {
+  background: #0d1117; border-radius: var(--radius-sm);
+  padding: 12px; margin: 8px 0; overflow-x: auto;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.msg-bubble pre code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; line-height: 1.5;
+  background: none; padding: 0; color: #e6edf3;
+}
+
+/* Code copy button */
+.code-block-wrap { position: relative; }
+.code-copy-btn {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+  color: #8a8a9a; border-radius: 6px;
+  padding: 3px 8px; font-size: 11px; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s; z-index: 2;
+}
+.code-copy-btn:hover { background: rgba(255,255,255,0.15); color: #e6edf3; }
+.code-copy-btn.copied { color: var(--green); }
+
+/* Images in messages */
+.msg-image {
+  max-width: 260px; max-height: 300px;
+  border-radius: var(--radius-sm); margin: 6px 0;
+  cursor: pointer; transition: transform 0.2s;
+  display: block;
+}
+.msg-image:hover { transform: scale(1.02); }
+
+/* ===== TYPING INDICATOR ===== */
+.typing-indicator {
+  display: none; padding: 0 12px; margin-bottom: 10px;
+}
+.typing-indicator.show { display: flex; }
+.typing-bubble {
+  background: var(--surface); border: 0.5px solid var(--amber-border);
+  border-radius: var(--radius); padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text-secondary); font-size: 13px;
+  animation: msgIn 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+.typing-dots { display: flex; gap: 4px; }
+.typing-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--amber); opacity: 0.4;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotPulse { 0%, 80%, 100% { opacity: 0.4; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+/* ===== TOOL CARDS (simple left-border style) ===== */
+.tool-card {
+  background: transparent;
+  border-left: 3px solid var(--green);
+  border-radius: 0;
+  margin: 8px 0; padding: 6px 12px;
+  font-size: 13px;
+}
+.tool-card-header {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; font-size: 12px; color: var(--text-secondary);
+}
+.tool-card-name {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary); font-weight: 500;
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px;
+}
+.tool-card-toggle { color: var(--text-muted); font-size: 10px; transition: transform 0.2s; margin-left: auto; }
+.tool-card-toggle.open { transform: rotate(180deg); }
+.tool-card-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+}
+.tool-card-body.open { max-height: 600px; }
+.tool-card-summary {
+  font-size: 11px; color: var(--text-muted);
+  padding: 2px 12px 4px;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.4;
+}
+.tool-card-content {
+  padding: 6px 0 0;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: pre-wrap; word-break: break-all;
+  color: var(--text-muted); line-height: 1.5;
+  max-height: 300px; overflow-y: auto;
+  font-size: 11px;
+}
+
+/* Tool card: in-progress state */
+.tool-card.thinking {
+  border-left-color: var(--amber);
+}
+.tool-card.thinking .tool-card-name { color: var(--amber-deep); }
+
+@keyframes toolSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.tool-spinner {
+  display: inline-block;
+  animation: toolSpin 1.2s linear infinite;
+}
+
+/* ===== SEARCH RESULTS ===== */
+.search-card {
+  background: var(--surface-2); border: 1px solid var(--amber-border);
+  border-radius: var(--radius-sm); margin: 8px 0; overflow: hidden;
+}
+.search-card-header {
+  padding: 8px 12px; background: var(--amber-soft);
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--amber-deep); cursor: pointer;
+}
+.search-card-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s; }
+.search-card-body.open { max-height: 500px; overflow-y: auto; padding: 8px 12px; }
+.search-result-item {
+  padding: 8px 0; border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-title { color: var(--amber-deep); font-weight: 500; margin-bottom: 3px; }
+.search-result-snippet { color: var(--text-secondary); font-size: 12px; }
+
+/* ===== IMAGE PREVIEW ===== */
+.image-preview-area {
+  display: none; padding: 8px 12px 0;
+  overflow-x: auto; white-space: nowrap;
+  background: var(--surface-2);
+}
+.image-preview-area.show { display: flex; gap: 8px; }
+.preview-thumb-wrap {
+  position: relative; display: inline-block; flex-shrink: 0;
+}
+.preview-thumb {
+  width: 64px; height: 64px; border-radius: 8px;
+  object-fit: cover; border: 2px solid var(--border);
+}
+.preview-remove {
+  position: absolute; top: -6px; right: -6px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--red); color: white; border: none;
+  font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+
+/* ===== FILE PREVIEW ===== */
+.file-preview-area {
+  display: none; padding: 6px 12px 0;
+  background: var(--surface-2);
+}
+.file-preview-area.show { display: flex; align-items: center; gap: 8px; }
+.file-preview-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--amber-soft); border: 1px solid var(--amber-border);
+  border-radius: 20px; padding: 4px 12px 4px 8px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.file-preview-chip .fp-icon { font-size: 14px; }
+.file-preview-chip .fp-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-preview-chip .fp-remove {
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 14px; padding: 0 0 0 4px;
+  line-height: 1;
+}
+.file-preview-chip .fp-remove:hover { color: var(--red); }
+
+/* ===== INPUT AREA ===== */
+.input-area {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border-light);
+  padding: 8px 12px;
+  padding-bottom: calc(8px + var(--safe-bottom));
+}
+
+.input-main {
+  display: flex; align-items: flex-end; gap: 8px;
+}
+
+#chatInput {
+  flex: 1; background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text); padding: 10px 16px;
+  font-size: 15px; font-family: 'Noto Sans SC', sans-serif;
+  resize: none; outline: none;
+  min-height: 42px; max-height: 150px;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+#chatInput:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(239,159,39,0.1); }
+#chatInput::placeholder { color: var(--text-muted); }
+
+.send-btn {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--amber) 0%, var(--amber-deep) 100%);
+  border: none; color: white; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(239,159,39,0.3);
+}
+.send-btn:hover { transform: scale(1.05); box-shadow: 0 2px 12px rgba(239,159,39,0.45); }
+.send-btn:active { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.send-btn.streaming-stop {
+  background: linear-gradient(135deg, var(--red) 0%, #c0392b 100%);
+  box-shadow: 0 2px 8px rgba(226,85,85,0.3);
+}
+
+/* Quick action pills */
+.quick-actions {
+  display: flex; gap: 8px; padding: 0 0 8px;
+  overflow-x: auto; white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.quick-actions::-webkit-scrollbar { display: none; }
+.quick-action-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'Noto Sans SC', sans-serif;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+.quick-action-pill:hover { border-color: var(--amber); color: var(--amber-deep); background: var(--amber-soft); }
+.quick-action-pill:active { transform: scale(0.96); }
+
+/* Attach button (inline with input) */
+.input-attach-btn {
+  background: none; border: none;
+  color: var(--text-muted); cursor: pointer;
+  font-size: 20px; padding: 8px 4px 8px 0;
+  transition: color 0.15s;
+  flex-shrink: 0;
+  display: flex; align-items: center;
+}
+.input-attach-btn:hover { color: var(--amber); }
+.input-attach-btn.recording { color: var(--red); animation: blink 0.6s infinite; }
+.attach-menu {
+  position: absolute; bottom: 100%; left: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 4px;
+  box-shadow: var(--shadow-md);
+  display: none; flex-direction: column; gap: 2px;
+  margin-bottom: 8px; min-width: 130px; z-index: 50;
+}
+.attach-menu.show { display: flex; }
+.attach-menu-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: var(--radius-xs);
+  border: none; background: none; cursor: pointer;
+  font-size: 14px; color: var(--text);
+  font-family: 'Noto Sans SC', sans-serif;
+  transition: background 0.1s;
+}
+.attach-menu-item:hover { background: var(--amber-soft); }
+
+/* Voice waveform */
+.voice-wave {
+  display: none; align-items: center; gap: 2px;
+  padding: 8px 12px; background: var(--amber-soft);
+  border-radius: 8px; margin-top: 6px;
+}
+.voice-wave.show { display: flex; }
+.voice-wave-bar {
+  width: 3px; background: var(--amber); border-radius: 2px;
+  animation: waveAnim 0.5s ease-in-out infinite alternate;
+}
+@keyframes waveAnim { from { height: 8px; } to { height: 24px; } }
+.voice-wave-bar:nth-child(2) { animation-delay: 0.1s; }
+.voice-wave-bar:nth-child(3) { animation-delay: 0.2s; }
+.voice-wave-bar:nth-child(4) { animation-delay: 0.3s; }
+.voice-wave-bar:nth-child(5) { animation-delay: 0.15s; }
+.voice-wave-bar:nth-child(6) { animation-delay: 0.25s; }
+.voice-wave-bar:nth-child(7) { animation-delay: 0.05s; }
+.voice-wave-bar:nth-child(8) { animation-delay: 0.35s; }
+.voice-timer { color: var(--amber-deep); font-size: 13px; margin-left: 8px; font-family: 'JetBrains Mono', monospace; }
+
+/* ===== MODEL SWITCHER ===== */
+.model-switcher {
+  position: fixed; inset: 0;
+  z-index: 1500; display: none;
+  align-items: flex-end; justify-content: center;
+}
+.model-switcher.show { display: flex; }
+.model-switcher-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.3);
+}
+.model-switcher-panel {
+  position: relative;
+  width: 100%; max-width: 768px;
+  background: var(--surface);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 16px calc(20px + var(--safe-bottom));
+  max-height: 60vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.model-switcher-title {
+  font-size: 16px; font-weight: 600; color: var(--text);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.model-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: background 0.15s;
+  margin-bottom: 4px;
+}
+.model-item:hover { background: var(--amber-soft); }
+.model-item.active { background: var(--amber-soft); border: 1px solid var(--amber-border); }
+.model-item-left { display: flex; flex-direction: column; gap: 2px; }
+.model-item-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.model-item-provider { font-size: 11px; color: var(--text-muted); }
+.model-item-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--amber); flex-shrink: 0;
+  display: none;
+}
+.model-item.active .model-item-dot { display: block; }
+
+/* ===== SETTINGS PANEL ===== */
+.settings-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+  z-index: 999; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.settings-overlay.show { opacity: 1; pointer-events: auto; }
+
+.settings-panel {
+  position: fixed; top: 0; right: -340px; bottom: 0;
+  width: 320px; max-width: 85vw;
+  background: var(--surface); z-index: 1000;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto; padding: 20px;
+  border-left: 1px solid var(--border-light);
+  box-shadow: var(--shadow-lg);
+}
+.settings-panel.show { right: 0; }
+
+.settings-title {
+  font-size: 20px; font-weight: 700; margin-bottom: 24px;
+  color: var(--text);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.settings-close {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 22px; cursor: pointer; padding: 4px;
+}
+.settings-close:hover { color: var(--text); }
+
+.setting-group { margin-bottom: 18px; }
+.setting-label {
+  font-size: 11px; color: var(--text-secondary);
+  margin-bottom: 6px; text-transform: uppercase;
+  letter-spacing: 0.5px; font-weight: 500;
+}
+.setting-input {
+  width: 100%; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 10px 12px;
+  font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+.setting-input:focus { border-color: var(--amber); }
+
+.setting-select {
+  width: 100%; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 10px 12px;
+  font-size: 14px; outline: none;
+  -webkit-appearance: none; appearance: none;
+  cursor: pointer;
+}
+.setting-select:focus { border-color: var(--amber); }
+
+.setting-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0;
+}
+.setting-toggle-label { font-size: 14px; color: var(--text); }
+.toggle-switch {
+  width: 44px; height: 24px; border-radius: 12px;
+  background: var(--surface-3); cursor: pointer;
+  position: relative; transition: background 0.2s;
+  border: none;
+}
+.toggle-switch.on { background: var(--amber); }
+.toggle-switch::after {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: white; top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.toggle-switch.on::after { transform: translateX(20px); }
+
+.setting-btn {
+  width: 100%; padding: 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text); font-size: 14px; cursor: pointer;
+  transition: all 0.2s; margin-bottom: 8px;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.setting-btn:hover { background: var(--amber-soft); border-color: var(--amber); }
+.setting-btn.danger { color: var(--red); border-color: rgba(226,85,85,0.2); }
+.setting-btn.danger:hover { background: rgba(226,85,85,0.06); border-color: var(--red); }
+
+.setting-section-title {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  margin: 20px 0 10px; padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ===== IMAGE LIGHTBOX ===== */
+.lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+  z-index: 2000; display: none; align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.lightbox.show { display: flex; }
+.lightbox img {
+  max-width: 95vw; max-height: 90vh;
+  border-radius: 8px; object-fit: contain;
+}
+
+/* ===== MAP PREVIEW ===== */
+.map-preview {
+  width: 240px; height: 140px; border-radius: var(--radius-sm);
+  background: var(--surface-3); margin: 6px 0;
+  overflow: hidden; position: relative;
+  border: 1px solid var(--border);
+}
+.map-preview img { width: 100%; height: 100%; object-fit: cover; }
+.map-preview .map-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  padding: 6px 8px; font-size: 11px; color: white;
+}
+
+/* ===== LOCATION CARD ===== */
+.location-card {
+  background: var(--surface-2); border: 1px solid rgba(74,187,122,0.2);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin: 6px 0;
+  font-size: 13px; display: flex; align-items: center; gap: 8px;
+}
+.location-card .loc-icon { font-size: 20px; }
+.location-card .loc-text { color: var(--text-secondary); }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 20px; border-radius: 10px;
+  font-size: 13px; z-index: 3000;
+  opacity: 0; transition: all 0.3s; pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== MOOD BADGE (v25: inline mood system message) ===== */
+.mood-badge {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 4px 14px; margin: 4px auto 8px;
+  background: var(--green-soft);
+  border: 1px solid var(--green-border);
+  border-radius: 20px; font-size: 12px;
+  color: var(--text-secondary);
+  animation: msgIn 0.3s ease;
+  width: fit-content;
+  max-width: 80%;
+}
+.mood-badge .mood-emoji { font-size: 14px; }
+.mood-badge .mood-text { font-weight: 500; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .msg-wrapper { max-width: 90%; }
+  .msg-bubble { font-size: 14px; }
+  .header { padding: 8px 12px; padding-top: calc(8px + var(--safe-top)); }
+  .msg-bubble pre code { font-size: 12px; }
+  .msg-actions { opacity: 1; } /* Always visible on mobile */
+}
+
+@media (min-width: 769px) {
+  #app { border-left: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-avatar">🔥</div>
+      <div class="header-info">
+        <div class="header-name">燃</div>
+        <div class="header-status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">在线</span>
+          <span class="header-model-tag" id="headerModelTag"></span>
+          <span class="mood-indicator" id="moodIndicator"></span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="header-btn" id="decisionsBtn" title="阿燃的抉择" style="display:none;">📋</button>
+      <button class="header-btn" id="comfortBtn" title="哄好了">💞</button>
+      <button class="header-btn" id="pendingBtn" title="待读消息" style="display:none;">
+        🔔<span class="pending-badge" id="pendingBadge">0</span>
+      </button>
+      <button class="header-btn" id="settingsBtn" title="设置">⚙️</button>
+    </div>
+  </div>
+
+  <!-- Chat Container -->
+  <div class="chat-container" id="chatContainer">
+    <div class="welcome" id="welcomeScreen">
+      <div class="welcome-fire">🔥</div>
+      <div class="welcome-title">嘿，Celia</div>
+      <div class="welcome-sub">我在这里。</div>
+    </div>
+  </div>
+
+  <!-- Typing Indicator -->
+  <div class="typing-indicator" id="typingIndicator">
+    <div class="typing-bubble">
+      <div class="typing-dots"><span></span><span></span><span></span></div>
+      <span>燃正在想...</span>
+    </div>
+  </div>
+
+  <!-- Image Preview -->
+  <div class="image-preview-area" id="imagePreview"></div>
+
+  <!-- File Preview -->
+  <div class="file-preview-area" id="filePreview"></div>
+
+  <!-- Voice Waveform -->
+  <div class="voice-wave" id="voiceWave">
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+    <div class="voice-wave-bar"></div><div class="voice-wave-bar"></div>
+    <span class="voice-timer" id="voiceTimer">00:00</span>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <!-- Quick Action Bar -->
+    <div class="quick-actions" id="quickActions">
+      <button class="quick-action-pill" id="qaPillImport" onclick="$('memoryFileInput').click()">📥 导入回忆</button>
+      <button class="quick-action-pill" id="qaPillModel" onclick="openModelSwitcher()">🔄 切换模型</button>
+      <button class="quick-action-pill" id="qaPillWallet" onclick="showToast('小金库功能开发中')">💰 小金库</button>
+    </div>
+    <div class="input-main" style="position:relative;">
+      <button class="input-attach-btn" id="attachBtn" title="附件">📎</button>
+      <div class="attach-menu" id="attachMenu">
+        <button class="attach-menu-item" id="amImage">📷 图片</button>
+        <button class="attach-menu-item" id="amFile">📄 文件</button>
+        <button class="attach-menu-item" id="amVoice">🎤 语音</button>
+        <button class="attach-menu-item" id="amLocation">📍 位置</button>
+      </div>
+      <textarea id="chatInput" rows="1" placeholder="说点什么..."></textarea>
+      <button class="send-btn" id="sendBtn" title="发送">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <input type="file" id="imgInput" accept="image/*" multiple style="display:none">
+    <input type="file" id="fileInput" accept=".txt,.md,.json,.py,.csv,.js,.ts,.html,.css,.yaml,.yml,.toml,.xml,.log,.image/*" style="display:none">
+  </div>
+</div>
+
+<!-- Model Switcher -->
+<div class="model-switcher" id="modelSwitcher">
+  <div class="model-switcher-backdrop" id="modelSwitcherBackdrop"></div>
+  <div class="model-switcher-panel">
+    <div class="model-switcher-title">🔄 切换模型</div>
+    <div id="modelList">
+      <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Panel -->
+<div class="settings-overlay" id="settingsOverlay"></div>
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-title">
+    设置
+    <button class="settings-close" id="settingsClose">&times;</button>
+  </div>
+
+  <div class="setting-group">
+    <div class="setting-label">API Base URL</div>
+    <input type="text" class="setting-input" id="settingBaseUrl" value="" placeholder="https://your-gateway.com">
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">API Key</div>
+    <input type="password" class="setting-input" id="settingApiKey" value="" placeholder="Bearer token">
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">模型</div>
+    <select class="setting-select" id="settingModel">
+      <option value="">🔥 网关默认模型</option>
+      <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+      <option value="claude-opus-4-20250514">Claude Opus 4</option>
+      <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+      <option value="deepseek-chat">DeepSeek Chat</option>
+      <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+    </select>
+  </div>
+  <div class="setting-group">
+    <div class="setting-toggle">
+      <span class="setting-toggle-label">语音朗读回复</span>
+      <button class="toggle-switch" id="toggleAutoTTS"></button>
+    </div>
+    <div class="setting-toggle">
+      <span class="setting-toggle-label">自动朗读新消息</span>
+      <button class="toggle-switch" id="toggleAutoRead"></button>
+    </div>
+  </div>
+  <div class="setting-group">
+    <div class="setting-label">Max Tokens</div>
+    <input type="number" class="setting-input" id="settingMaxTokens" value="4096" min="256" max="32768">
+  </div>
+
+  <div class="setting-section-title">回忆管理</div>
+  <div class="setting-group">
+    <button class="setting-btn" id="importMemoryBtn">📥 导入回忆 (.md)</button>
+  </div>
+  <input type="file" id="memoryFileInput" accept=".md" style="display:none">
+
+  <div class="setting-section-title">操作</div>
+  <div class="setting-group">
+    <button class="setting-btn" onclick="window.open('/admin/panel','_blank')">📊 管理面板</button>
+    <button class="setting-btn" id="exportBtn">📤 导出聊天记录</button>
+    <button class="setting-btn danger" id="clearBtn">🗑️ 清空聊天记录</button>
+  </div>
+  <div style="text-align:center; margin-top:16px; color:var(--text-muted); font-size:11px;">
+    Ember Gateway · Built with 🔥
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox"><img id="lightboxImg" src="" alt=""></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===============================
+// CONFIGURATION & STATE
+// ===============================
+const DEFAULT_BASE_URL = location.origin;
+const DEFAULT_API_KEY = 'ember-12020225';
+const STORAGE_KEY = 'ember_chat_v3';
+
+const state = {
+  messages: [],
+  isStreaming: false,
+  abortController: null,
+  userScrolled: false,
+  pendingImages: [],
+  pendingFiles: [],      // [{file, content, name}]
+  isRecording: false,
+  recognition: null,
+  recordingStart: 0,
+  recordingTimer: null,
+  searchResults: null,
+  currentTTS: null,
+  currentTTSBtn: null,
+  currentModel: '',      // display name of current model
+  settings: {
+    baseUrl: DEFAULT_BASE_URL,
+    apiKey: DEFAULT_API_KEY,
+    model: '',
+    autoTTS: false,
+    autoRead: false,
+    maxTokens: 4096,
+  }
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.messages) state.messages = data.messages;
+      if (data.settings) Object.assign(state.settings, data.settings);
+    }
+    // Also try migrating from v2
+    if (!saved) {
+      const old = localStorage.getItem('ember_chat_v2');
+      if (old) {
+        const data = JSON.parse(old);
+        if (data.messages) state.messages = data.messages;
+        if (data.settings) Object.assign(state.settings, data.settings);
+        saveState();
+      }
+    }
+  } catch(e) { console.warn('Failed to load state:', e); }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      messages: state.messages.slice(-200),
+      settings: state.settings,
+    }));
+  } catch(e) { console.warn('Failed to save state:', e); }
+}
+
+// ===============================
+// DOM REFERENCES
+// ===============================
+const $ = id => document.getElementById(id);
+const chatContainer = $('chatContainer');
+const chatInput = $('chatInput');
+const sendBtn = $('sendBtn');
+const typingIndicator = $('typingIndicator');
+const welcomeScreen = $('welcomeScreen');
+const statusDot = $('statusDot');
+const statusText = $('statusText');
+const moodIndicator = $('moodIndicator');
+const imagePreview = $('imagePreview');
+const filePreview = $('filePreview');
+const voiceWave = $('voiceWave');
+const voiceTimer = $('voiceTimer');
+const lightbox = $('lightbox');
+const lightboxImg = $('lightboxImg');
+const toast = $('toast');
+const settingsPanel = $('settingsPanel');
+const settingsOverlay = $('settingsOverlay');
+const modelSwitcher = $('modelSwitcher');
+
+// ===============================
+// UTILITIES
+// ===============================
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function notifyDesktop(title, body) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(title, {
+      body: body || '', icon: '/favicon.ico',
+      tag: 'ember-msg', requireInteraction: false,
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+    setTimeout(() => { try { n.close(); } catch(e){} }, 8000);
+  } catch(e) {}
+}
+
+function playNotifSound() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const beep = (freq, startAt, dur=0.32) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.0, ctx.currentTime + startAt);
+      gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + startAt + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startAt + dur);
+      osc.start(ctx.currentTime + startAt);
+      osc.stop(ctx.currentTime + startAt + dur);
+    };
+    beep(880, 0); beep(1108, 0.18);
+  } catch(e) {}
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const pad = n => n.toString().padStart(2, '0');
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (d.toDateString() === now.toDateString()) return time;
+  if (d.toDateString() === new Date(now - 86400000).toDateString()) return `昨天 ${time}`;
+  return `${d.getMonth()+1}/${d.getDate()} ${time}`;
+}
+
+function showToast(msg, duration = 2500) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+function apiUrl(path) {
+  const base = state.settings.baseUrl.replace(/\/+$/, '');
+  return base + path;
+}
+
+function apiHeaders() {
+  return {
+    'Authorization': `Bearer ${state.settings.apiKey}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+// ===============================
+// MARKDOWN RENDERING
+// ===============================
+marked.setOptions({
+  highlight: (code, lang) => {
+    if (lang && hljs.getLanguage(lang)) {
+      try { return hljs.highlight(code, { language: lang }).value; } catch(e) {}
+    }
+    try { return hljs.highlightAuto(code).value; } catch(e) {}
+    return code;
+  },
+  breaks: true, gfm: true,
+});
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = marked.parse(text);
+  html = html.replace(/<pre><code(.*?)>([\s\S]*?)<\/code><\/pre>/g,
+    '<div class="code-block-wrap"><button class="code-copy-btn" onclick="copyCode(this)">复制</button><pre><code$1>$2</code></pre></div>');
+  return html;
+}
+
+function copyCode(btn) {
+  const code = btn.nextElementSibling.querySelector('code');
+  navigator.clipboard.writeText(code.innerText).then(() => {
+    btn.textContent = '已复制'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// ===============================
+// SCROLL MANAGEMENT
+// ===============================
+function isNearBottom() {
+  return chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 120;
+}
+
+function scrollToBottom(force = false) {
+  if (force || !state.userScrolled) {
+    requestAnimationFrame(() => { chatContainer.scrollTop = chatContainer.scrollHeight; });
+  }
+}
+
+chatContainer.addEventListener('scroll', () => { state.userScrolled = !isNearBottom(); });
+
+// ===============================
+// MESSAGE RENDERING
+// ===============================
+function renderMessages() {
+  if (state.messages.length > 0 && welcomeScreen) welcomeScreen.style.display = 'none';
+  chatContainer.querySelectorAll('.message').forEach(el => el.remove());
+  state.messages.forEach(msg => appendMessageDOM(msg, false));
+  scrollToBottom(true);
+}
+
+function appendMessageDOM(msg, animate = true) {
+  if (welcomeScreen) welcomeScreen.style.display = 'none';
+
+  const div = document.createElement('div');
+  div.className = `message ${msg.role}`;
+  div.dataset.id = msg.id;
+  if (!animate) div.style.animation = 'none';
+
+  let contentHtml = '';
+
+  if (msg.images && msg.images.length) {
+    msg.images.forEach(src => {
+      contentHtml += `<img class="msg-image" src="${escHtml(src)}" onclick="openLightbox('${escHtml(src)}')" loading="lazy">`;
+    });
+  }
+
+  if (typeof msg.content === 'string') {
+    if (msg.role === 'assistant') contentHtml += renderMarkdown(msg.content);
+    else if (msg.role === 'system') contentHtml += escHtml(msg.content);
+    else contentHtml += escHtml(msg.content).replace(/\n/g, '<br>');
+  } else if (Array.isArray(msg.content)) {
+    msg.content.forEach(part => {
+      if (part.type === 'text') {
+        if (msg.role === 'assistant') contentHtml += renderMarkdown(part.text);
+        else contentHtml += escHtml(part.text).replace(/\n/g, '<br>');
+      } else if (part.type === 'image_url') {
+        contentHtml += `<img class="msg-image" src="${escHtml(part.image_url.url)}" onclick="openLightbox('${escHtml(part.image_url.url)}')" loading="lazy">`;
+      }
+    });
+  }
+
+  if (msg.toolCalls && msg.toolCalls.length) {
+    msg.toolCalls.forEach(tc => { contentHtml += renderToolCard(tc); });
+  }
+  if (msg.searchResults) contentHtml += renderSearchCard(msg.searchResults);
+  if (msg.location) contentHtml += renderLocationCard(msg.location);
+
+  // Build action bar
+  const timeStr = msg.time ? formatTime(msg.time) : '';
+  let actionsHtml = '';
+
+  if (msg.role === 'assistant') {
+    const safeContent = typeof msg.content === 'string' ? msg.content : '';
+    actionsHtml = `<div class="msg-actions">
+      <span class="msg-time-label">${timeStr}</span>
+      <button class="msg-action-btn" onclick="regenerateMessage('${msg.id}')" title="重新生成">↻</button>
+      <button class="msg-action-btn" onclick="copyMessage('${msg.id}')" title="复制">📋</button>
+      <button class="msg-action-btn" onclick="speakText(this, ${JSON.stringify(safeContent.replace(/"/g, '\\"').replace(/\n/g, '\\n'))})" title="朗读">🔊</button>
+    </div>`;
+  } else if (msg.role === 'user') {
+    actionsHtml = `<div class="msg-actions">
+      <button class="msg-action-btn" onclick="editMessage('${msg.id}')" title="编辑">✏️</button>
+      <button class="msg-action-btn" onclick="copyMessage('${msg.id}')" title="复制">📋</button>
+      <span class="msg-time-label">${timeStr}</span>
+    </div>`;
+  }
+
+  div.innerHTML = `<div class="msg-wrapper"><div class="msg-bubble">${contentHtml}</div>${actionsHtml}</div>`;
+  chatContainer.appendChild(div);
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderToolCard(tc) {
+  const id = genId();
+  const isThinking = !tc.result;
+  let argsStr = '';
+  let argsSummary = '';
+  try {
+    const argsObj = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
+    argsStr = JSON.stringify(argsObj, null, 2);
+    // v25: 生成简洁的参数摘要（key: value, key: value）
+    if (argsObj && typeof argsObj === 'object') {
+      argsSummary = Object.entries(argsObj)
+        .filter(([k,v]) => v !== null && v !== undefined && String(v).length < 60)
+        .map(([k,v]) => `${k}: ${v}`)
+        .join(', ');
+    }
+  } catch(e) {
+    argsStr = String(tc.arguments);
+  }
+
+  const icon = isThinking ? '<span class="tool-spinner">⏳</span>' : '✅';
+  const toolLabel = tc.name || tc.function?.name || 'tool';
+  const summaryLine = argsSummary ? `<div class="tool-card-summary">${escHtml(argsSummary)}</div>` : '';
+
+  return `
+    <div class="tool-card ${isThinking ? 'thinking' : ''}" id="tc-${id}">
+      <div class="tool-card-header" onclick="toggleToolCard('${id}')">
+        <span class="tool-card-name">${icon} 调用工具：${escHtml(toolLabel)}</span>
+        <span class="tool-card-toggle" id="tc-toggle-${id}">▼</span>
+      </div>
+      ${summaryLine}
+      <div class="tool-card-body" id="tc-body-${id}">
+        <div class="tool-card-content">${escHtml(argsStr)}${tc.result ? '\n\n--- Result ---\n' + escHtml(typeof tc.result === 'string' ? tc.result : JSON.stringify(tc.result, null, 2)) : ''}</div>
+      </div>
+    </div>`;
+}
+
+function toggleToolCard(id) {
+  const body = document.getElementById('tc-body-' + id);
+  const toggle = document.getElementById('tc-toggle-' + id);
+  if (body) { body.classList.toggle('open'); toggle.classList.toggle('open'); }
+}
+
+function renderSearchCard(results) {
+  const id = genId();
+  let items = '';
+  if (Array.isArray(results)) {
+    results.forEach(r => {
+      items += `<div class="search-result-item"><div class="search-result-title">${escHtml(r.title || '')}</div><div class="search-result-snippet">${escHtml(r.snippet || r.content || '')}</div></div>`;
+    });
+  }
+  return `<div class="search-card">
+    <div class="search-card-header" onclick="this.nextElementSibling.classList.toggle('open')">🔍 搜索结果 (${Array.isArray(results) ? results.length : 0})</div>
+    <div class="search-card-body">${items}</div>
+  </div>`;
+}
+
+function renderLocationCard(loc) {
+  return `<div class="location-card">
+    <span class="loc-icon">📍</span>
+    <span class="loc-text">${escHtml(loc.address || `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`)}</span>
+  </div>`;
+}
+
+// ===============================
+// MESSAGE ACTIONS
+// ===============================
+function copyMessage(msgId) {
+  const msg = state.messages.find(m => m.id === msgId);
+  if (!msg) return;
+  const text = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+  navigator.clipboard.writeText(text).then(() => showToast('已复制'));
+}
+
+function regenerateMessage(msgId) {
+  if (state.isStreaming) return;
+  const idx = state.messages.findIndex(m => m.id === msgId);
+  if (idx < 0) return;
+
+  // Remove this and all subsequent messages
+  const removed = state.messages.splice(idx);
+  removed.forEach(m => {
+    const el = chatContainer.querySelector(`.message[data-id="${m.id}"]`);
+    if (el) el.remove();
+  });
+
+  // Find the last user message to resend
+  const lastUser = [...state.messages].reverse().find(m => m.role === 'user');
+  if (lastUser) {
+    saveState();
+    sendToAI(lastUser.content);
+  } else {
+    saveState();
+    showToast('没有找到可重新生成的消息');
+  }
+}
+
+function editMessage(msgId) {
+  const msg = state.messages.find(m => m.id === msgId);
+  if (!msg || state.isStreaming) return;
+  const text = typeof msg.content === 'string' ? msg.content : '';
+  chatInput.value = text;
+  autoResize();
+  chatInput.focus();
+
+  // Remove this message and all after it
+  const idx = state.messages.indexOf(msg);
+  const removed = state.messages.splice(idx);
+  removed.forEach(m => {
+    const el = chatContainer.querySelector(`.message[data-id="${m.id}"]`);
+    if (el) el.remove();
+  });
+  saveState();
+  showToast('已加载到输入框，修改后发送');
+}
+
+// ===============================
+// LIGHTBOX
+// ===============================
+function openLightbox(src) {
+  lightboxImg.src = src;
+  lightbox.classList.add('show');
+}
+lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+
+// ===============================
+// ATTACH MENU
+// ===============================
+$('attachBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('attachMenu').classList.toggle('show');
+});
+document.addEventListener('click', (e) => {
+  if (!$('attachMenu').contains(e.target) && e.target !== $('attachBtn')) {
+    $('attachMenu').classList.remove('show');
+  }
+});
+$('amImage').addEventListener('click', () => { $('attachMenu').classList.remove('show'); $('imgInput').click(); });
+$('amFile').addEventListener('click', () => { $('attachMenu').classList.remove('show'); $('fileInput').click(); });
+$('amVoice').addEventListener('click', () => {
+  $('attachMenu').classList.remove('show');
+  if (state.isRecording) stopRecording(); else startRecording();
+});
+$('amLocation').addEventListener('click', () => {
+  $('attachMenu').classList.remove('show');
+  handleLocation();
+});
+
+// ===============================
+// IMAGE HANDLING
+// ===============================
+
+$('imgInput').addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      state.pendingImages.push({ file, dataUrl: ev.target.result });
+      renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+});
+
+function renderImagePreviews() {
+  if (state.pendingImages.length === 0) {
+    imagePreview.classList.remove('show');
+    imagePreview.innerHTML = '';
+    return;
+  }
+  imagePreview.classList.add('show');
+  imagePreview.innerHTML = state.pendingImages.map((img, i) =>
+    `<div class="preview-thumb-wrap">
+      <img class="preview-thumb" src="${img.dataUrl}">
+      <button class="preview-remove" onclick="removePreviewImage(${i})">&times;</button>
+    </div>`
+  ).join('');
+}
+
+function removePreviewImage(idx) {
+  state.pendingImages.splice(idx, 1);
+  renderImagePreviews();
+}
+
+async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const resp = await fetch(apiUrl('/api/upload'), {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${state.settings.apiKey}` },
+      body: formData,
+    });
+    const data = await resp.json();
+    return data.url || data.image_url || null;
+  } catch(e) {
+    console.error('Upload failed:', e);
+    showToast('图片上传失败');
+    return null;
+  }
+}
+
+async function getVisionDescription(imageUrl) {
+  try {
+    const resp = await fetch(apiUrl('/api/vision'), {
+      method: 'POST', headers: apiHeaders(),
+      body: JSON.stringify({ image_url: imageUrl, question: '请详细描述这张图片的内容。' }),
+    });
+    const data = await resp.json();
+    return data.answer || data.description || data.content || data.result || '';
+  } catch(e) {
+    console.error('Vision API failed:', e);
+    return '';
+  }
+}
+
+// ===============================
+// FILE HANDLING (NEW)
+// ===============================
+// FILE HANDLING (attached via attach menu above)
+
+$('fileInput').addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      state.pendingFiles.push({ file, content: ev.target.result, name: file.name });
+      renderFilePreviews();
+    };
+    reader.readAsText(file);
+  });
+  e.target.value = '';
+});
+
+function renderFilePreviews() {
+  if (state.pendingFiles.length === 0) {
+    filePreview.classList.remove('show');
+    filePreview.innerHTML = '';
+    return;
+  }
+  filePreview.classList.add('show');
+  filePreview.innerHTML = state.pendingFiles.map((f, i) =>
+    `<div class="file-preview-chip">
+      <span class="fp-icon">📄</span>
+      <span class="fp-name">${escHtml(f.name)}</span>
+      <button class="fp-remove" onclick="removePendingFile(${i})">&times;</button>
+    </div>`
+  ).join('');
+}
+
+function removePendingFile(idx) {
+  state.pendingFiles.splice(idx, 1);
+  renderFilePreviews();
+}
+
+// ===============================
+// VOICE INPUT
+// ===============================
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'zh-CN';
+  recognition.interimResults = true;
+  recognition.continuous = true;
+
+  recognition.onresult = (e) => {
+    let transcript = '';
+    for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+    chatInput.value = transcript;
+    autoResize();
+  };
+  recognition.onerror = (e) => {
+    console.error('Speech error:', e.error);
+    stopRecording();
+    if (e.error === 'not-allowed') showToast('麦克风权限被拒绝');
+  };
+  recognition.onend = () => { if (state.isRecording) stopRecording(); };
+  return recognition;
+}
+
+function startRecording() {
+  if (!state.recognition) state.recognition = initSpeechRecognition();
+  if (!state.recognition) { showToast('浏览器不支持语音输入'); return; }
+  state.isRecording = true;
+  state.recordingStart = Date.now();
+  $('attachBtn').classList.add('recording');
+  voiceWave.classList.add('show');
+  state.recordingTimer = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - state.recordingStart) / 1000);
+    voiceTimer.textContent = `${Math.floor(elapsed/60).toString().padStart(2,'0')}:${(elapsed%60).toString().padStart(2,'0')}`;
+  }, 1000);
+  try { state.recognition.start(); } catch(e) {}
+}
+
+function stopRecording() {
+  state.isRecording = false;
+  $('attachBtn').classList.remove('recording');
+  voiceWave.classList.remove('show');
+  clearInterval(state.recordingTimer);
+  voiceTimer.textContent = '00:00';
+  try { state.recognition?.stop(); } catch(e) {}
+}
+
+// Voice toggle handled by attach menu amVoice button
+
+// ===============================
+// TEXT-TO-SPEECH
+// ===============================
+function speakText(btn, text) {
+  if (!text) return;
+  if (state.currentTTS) {
+    speechSynthesis.cancel();
+    if (state.currentTTSBtn) state.currentTTSBtn.classList.remove('playing');
+    if (state.currentTTSBtn === btn) { state.currentTTS = null; state.currentTTSBtn = null; return; }
+  }
+  tryAPITTS(text, btn).catch(() => {
+    const utter = new SpeechSynthesisUtterance(text.replace(/[#*`_~\[\]()]/g, ''));
+    utter.lang = 'zh-CN'; utter.rate = 1.0;
+    utter.onend = () => { btn.classList.remove('playing'); state.currentTTS = null; state.currentTTSBtn = null; };
+    utter.onerror = () => { btn.classList.remove('playing'); state.currentTTS = null; state.currentTTSBtn = null; };
+    speechSynthesis.speak(utter);
+    state.currentTTS = utter;
+    state.currentTTSBtn = btn;
+    btn.classList.add('playing');
+  });
+}
+
+async function tryAPITTS(text, btn) {
+  // v25: 清理markdown标记，传engine=auto让后端ElevenLabs优先
+  const cleanText = text.replace(/[#*`_~\[\](){}]/g, '').replace(/\n{2,}/g, '。').trim();
+  const resp = await fetch(apiUrl('/api/tts'), {
+    method: 'POST', headers: apiHeaders(),
+    body: JSON.stringify({ text: cleanText.slice(0, 1000), engine: 'auto' }),
+  });
+  if (!resp.ok) throw new Error('TTS API failed');
+  const blob = await resp.blob();
+  const audio = new Audio(URL.createObjectURL(blob));
+  if (btn) { btn.classList.add('playing'); }
+  audio.onended = () => { if (btn) btn.classList.remove('playing'); state.currentTTS = null; state.currentTTSBtn = null; };
+  state.currentTTS = audio;
+  state.currentTTSBtn = btn;
+  audio.play();
+  return audio;
+}
+
+// ===============================
+// SEARCH
+// ===============================
+// Search can be triggered via /search command in chat input
+
+async function doSearch(query) {
+  showToast('正在搜索...');
+  try {
+    const resp = await fetch(apiUrl('/api/think'), {
+      method: 'POST', headers: apiHeaders(),
+      body: JSON.stringify({ task: 'search', content: query, context: '' }),
+    });
+    const data = await resp.json();
+    state.searchResults = data.results || data.content || data;
+    const msg = {
+      role: 'system', id: genId(), time: Date.now(),
+      content: `🔍 搜索: ${query}`,
+      searchResults: Array.isArray(state.searchResults) ? state.searchResults : [{ title: '结果', content: JSON.stringify(state.searchResults) }],
+    };
+    state.messages.push(msg);
+    appendMessageDOM(msg);
+    scrollToBottom(true);
+    saveState();
+    showToast('搜索完成');
+  } catch(e) {
+    console.error('Search failed:', e);
+    showToast('搜索失败');
+    state.searchResults = null;
+  }
+}
+
+// ===============================
+// LOCATION
+// ===============================
+function handleLocation() {
+  if (!navigator.geolocation) { showToast('浏览器不支持定位'); return; }
+  showToast('获取位置中...');
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+    try {
+      await fetch(apiUrl('/api/gps'), {
+        method: 'POST', headers: apiHeaders(),
+        body: JSON.stringify({ lat, lng, accuracy }),
+      });
+    } catch(e) {}
+    const msg = {
+      role: 'user', id: genId(), time: Date.now(),
+      content: `📍 我在这里`,
+      location: { lat, lng, address: `${lat.toFixed(4)}, ${lng.toFixed(4)}` },
+    };
+    state.messages.push(msg);
+    appendMessageDOM(msg);
+    scrollToBottom(true);
+    saveState();
+    sendToAI(`Celia 分享了她的位置: 纬度${lat.toFixed(6)}, 经度${lng.toFixed(6)}。请关心一下她在哪里。`);
+  }, (err) => { showToast('定位失败: ' + err.message); }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+// ===============================
+// MODEL SWITCHING
+// ===============================
+$('modelSwitcherBackdrop').addEventListener('click', () => modelSwitcher.classList.remove('show'));
+
+async function openModelSwitcher() {
+  modelSwitcher.classList.add('show');
+  const modelList = $('modelList');
+  modelList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">加载中...</div>';
+
+  try {
+    // Fetch current config
+    const configResp = await fetch(apiUrl('/admin/config'), { headers: apiHeaders() });
+    const config = configResp.ok ? await configResp.json() : {};
+
+    // Fetch providers
+    const provResp = await fetch(apiUrl('/admin/providers'), { headers: apiHeaders() });
+    const providers = provResp.ok ? await provResp.json() : {};
+
+    const currentProvider = config.current_provider || config.provider || '';
+    const currentModel = config.current_model || config.model || '';
+
+    let html = '';
+
+    // Default gateway model
+    html += `<div class="model-item ${!state.settings.model ? 'active' : ''}" onclick="selectModel('', '网关默认')">
+      <div class="model-item-left">
+        <div class="model-item-name">🔥 网关默认</div>
+        <div class="model-item-provider">${currentProvider ? currentProvider + ' / ' + currentModel : '当前活跃模型'}</div>
+      </div>
+      <div class="model-item-dot"></div>
+    </div>`;
+
+    // Provider models
+    const providerList = providers.providers || providers.list || (Array.isArray(providers) ? providers : []);
+    if (providerList.length > 0) {
+      providerList.forEach(p => {
+        const name = p.name || p.provider || p.id || '';
+        const models = p.models || [];
+        models.forEach(m => {
+          const modelId = typeof m === 'string' ? m : (m.id || m.name || '');
+          const isActive = state.settings.model === modelId;
+          html += `<div class="model-item ${isActive ? 'active' : ''}" onclick="selectModel('${escHtml(modelId)}', '${escHtml(name)}')">
+            <div class="model-item-left">
+              <div class="model-item-name">${escHtml(modelId)}</div>
+              <div class="model-item-provider">${escHtml(name)}</div>
+            </div>
+            <div class="model-item-dot"></div>
+          </div>`;
+        });
+      });
+    }
+
+    // Also add some hardcoded fallbacks if provider list is empty
+    if (providerList.length === 0) {
+      const fallbacks = [
+        { id: 'deepseek-reasoner', name: 'DeepSeek' },
+        { id: 'deepseek-chat', name: 'DeepSeek' },
+        { id: 'claude-sonnet-4-20250514', name: 'Anthropic' },
+      ];
+      fallbacks.forEach(f => {
+        const isActive = state.settings.model === f.id;
+        html += `<div class="model-item ${isActive ? 'active' : ''}" onclick="selectModel('${f.id}', '${f.name}')">
+          <div class="model-item-left">
+            <div class="model-item-name">${f.id}</div>
+            <div class="model-item-provider">${f.name}</div>
+          </div>
+          <div class="model-item-dot"></div>
+        </div>`;
+      });
+    }
+
+    modelList.innerHTML = html;
+  } catch(e) {
+    console.error('Failed to load models:', e);
+    modelList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">加载失败</div>';
+  }
+}
+
+async function selectModel(modelId, providerName) {
+  state.settings.model = modelId;
+  state.currentModel = modelId || '默认';
+  saveState();
+
+  // Update header tag
+  const tag = $('headerModelTag');
+  if (tag) tag.textContent = modelId || providerName || '';
+
+  // Try to switch on gateway side
+  if (modelId) {
+    try {
+      await fetch(apiUrl('/admin/config'), {
+        method: 'POST', headers: apiHeaders(),
+        body: JSON.stringify({ switch_to: modelId }),
+      });
+    } catch(e) {}
+  }
+
+  modelSwitcher.classList.remove('show');
+  showToast(`已切换到 ${modelId || '网关默认模型'}`);
+
+  // Update settings dropdown too
+  $('settingModel').value = modelId;
+}
+
+// ===============================
+// MEMORY IMPORT (NEW)
+// ===============================
+$('importMemoryBtn').addEventListener('click', () => $('memoryFileInput').click());
+
+$('memoryFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const content = ev.target.result;
+    try {
+      // Try updating via dimensions endpoint
+      const resp = await fetch(apiUrl('/admin/dimensions/update'), {
+        method: 'POST', headers: apiHeaders(),
+        body: JSON.stringify({
+          dimension: 'emotional',
+          action: 'append',
+          content: content,
+        }),
+      });
+      if (resp.ok) {
+        showToast(`回忆导入成功：${file.name}`);
+      } else {
+        showToast('导入失败，请检查网关接口');
+      }
+    } catch(err) {
+      console.error('Memory import failed:', err);
+      showToast('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ===============================
+// CHAT SENDING
+// ===============================
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  const images = [...state.pendingImages];
+  const files = [...state.pendingFiles];
+
+  if (!text && images.length === 0 && files.length === 0) return;
+  if (state.isStreaming) return;
+
+  if (text.startsWith('/search ')) {
+    chatInput.value = '';
+    autoResize();
+    doSearch(text.slice(8));
+    return;
+  }
+
+  chatInput.value = '';
+  autoResize();
+  state.pendingImages = [];
+  state.pendingFiles = [];
+  renderImagePreviews();
+  renderFilePreviews();
+
+  // Build display text: original text + file contents
+  let displayText = text;
+  let apiText = text;
+  if (files.length > 0) {
+    const fileParts = files.map(f => `[文件: ${f.name}]\n${f.content}`).join('\n\n');
+    apiText = text ? `${text}\n\n${fileParts}` : fileParts;
+    displayText = text || `📄 ${files.map(f => f.name).join(', ')}`;
+  }
+
+  const userMsg = {
+    role: 'user', id: genId(), time: Date.now(),
+    content: displayText,
+    images: images.map(img => img.dataUrl),
+  };
+
+  state.messages.push(userMsg);
+  appendMessageDOM(userMsg);
+  scrollToBottom(true);
+  saveState();
+
+  // Image handling (same as before)
+  let imageUrls = [];
+  let visionDescriptions = [];
+
+  if (images.length > 0) {
+    showToast('图片上传中...', 2000);
+    const urls = await Promise.all(images.map(img => uploadImage(img.file)));
+    for (let i = 0; i < urls.length; i++) {
+      if (urls[i]) { imageUrls.push(urls[i]); userMsg.images[i] = urls[i]; }
+    }
+    saveState();
+
+    if (imageUrls.length > 0) {
+      showToast('燃在看图片...', 2000);
+      const descs = await Promise.all(imageUrls.map(url => getVisionDescription(url).catch(() => null)));
+      visionDescriptions = descs.filter(d => d);
+      if (visionDescriptions.length === 0 && imageUrls.length > 0) showToast('⚠️ 燃这次可能看不清图', 3000);
+    }
+  }
+
+  // Build API content
+  let apiContent;
+  if (imageUrls.length > 0) {
+    apiContent = [];
+    if (apiText) apiContent.push({ type: 'text', text: apiText });
+    imageUrls.forEach(url => apiContent.push({ type: 'image_url', image_url: { url } }));
+    if (visionDescriptions.length > 0) apiContent.push({ type: 'text', text: `[图片描述: ${visionDescriptions.join('; ')}]` });
+  } else {
+    apiContent = apiText;
+  }
+
+  if (state.searchResults) {
+    const searchContext = `[搜索结果供参考: ${JSON.stringify(state.searchResults).slice(0, 2000)}]`;
+    if (typeof apiContent === 'string') apiContent = apiContent + '\n\n' + searchContext;
+    else apiContent.push({ type: 'text', text: searchContext });
+    state.searchResults = null;
+  }
+
+  await sendToAI(apiContent);
+}
+
+async function sendToAI(content) {
+  const apiMessages = state.messages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .slice(-30)
+    .map(m => {
+      if (m.images && m.images.length > 0 && typeof m.content === 'string') {
+        const parts = [];
+        if (m.content) parts.push({ type: 'text', text: m.content });
+        m.images.forEach(url => { if (url.startsWith('http')) parts.push({ type: 'image_url', image_url: { url } }); });
+        return { role: m.role, content: parts.length > 0 ? parts : m.content };
+      }
+      return { role: m.role, content: m.content };
+    });
+
+  const lastUserMsg = apiMessages[apiMessages.length - 1];
+  if (lastUserMsg && typeof content !== 'string' || (typeof content === 'string' && content !== lastUserMsg?.content)) {
+    if (lastUserMsg && lastUserMsg.role === 'user') lastUserMsg.content = content;
+    else apiMessages.push({ role: 'user', content });
+  }
+
+  state.isStreaming = true;
+  state.abortController = new AbortController();
+  setStatus('streaming');
+  sendBtn.classList.add('streaming-stop');
+  typingIndicator.classList.add('show');
+  scrollToBottom(true);
+
+  const assistantMsg = { role: 'assistant', id: genId(), time: Date.now(), content: '', toolCalls: [] };
+
+  try {
+    const resp = await fetch(apiUrl('/v1/chat/completions'), {
+      method: 'POST', headers: apiHeaders(),
+      signal: state.abortController.signal,
+      body: JSON.stringify({
+        model: state.settings.model,
+        messages: apiMessages,
+        stream: true,
+        max_tokens: parseInt(state.settings.maxTokens) || 4096,
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => resp.statusText);
+      throw new Error(`API Error ${resp.status}: ${errText.slice(0, 200)}`);
+    }
+
+    typingIndicator.classList.remove('show');
+    state.messages.push(assistantMsg);
+    appendMessageDOM(assistantMsg);
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let toolCallsMap = {};
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        if (!trimmed.startsWith('data: ')) continue;
+        try {
+          const json = JSON.parse(trimmed.slice(6));
+          const delta = json.choices?.[0]?.delta;
+          if (!delta) continue;
+          if (delta.content) {
+            assistantMsg.content += delta.content;
+            updateStreamingMessage(assistantMsg);
+          }
+          if (delta.tool_calls) {
+            for (const tc of delta.tool_calls) {
+              const idx = tc.index ?? 0;
+              if (!toolCallsMap[idx]) toolCallsMap[idx] = { id: tc.id || genId(), name: tc.function?.name || '', arguments: '', result: null };
+              if (tc.function?.name) toolCallsMap[idx].name = tc.function.name;
+              if (tc.function?.arguments) toolCallsMap[idx].arguments += tc.function.arguments;
+            }
+            assistantMsg.toolCalls = Object.values(toolCallsMap);
+            updateStreamingMessage(assistantMsg);
+          }
+          // v25: 处理网关工具执行结果
+          if (json.ember_tool_result) {
+            const tr = json.ember_tool_result;
+            // 更新对应 tool card 的 result
+            for (const tc of Object.values(toolCallsMap)) {
+              if (tc.id === tr.id || tc.name === tr.name) {
+                tc.result = tr.result;
+              }
+            }
+            assistantMsg.toolCalls = Object.values(toolCallsMap);
+            updateStreamingMessage(assistantMsg);
+
+            // 如果是 update_mood，插入心情系统消息
+            if (tr.name === 'update_mood' && tr.result) {
+              const moodMatch = tr.result.match(/([😠💧💭✨😼💭🔥💚💛❤️🧡💜🩵]+)\s*(\w+)\s*\(强度\s*(\d+)/);
+              if (moodMatch) {
+                insertMoodBadge(moodMatch[1], moodMatch[2], moodMatch[3]);
+              } else {
+                // fallback: 直接用结果文本
+                insertMoodBadge('💚', '', '', tr.result.replace('✅ 情绪已更新: ', ''));
+              }
+            }
+          }
+          if (json.choices?.[0]?.finish_reason) {
+            for (const tc of Object.values(toolCallsMap)) {
+              try { tc.arguments = JSON.parse(tc.arguments); } catch(e) {}
+            }
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {
+    if (e.name === 'AbortError') assistantMsg.content += '\n\n*[已停止]*';
+    else { console.error('Streaming error:', e); assistantMsg.content = `⚠️ 连接错误: ${e.message}`; }
+    updateStreamingMessage(assistantMsg);
+  } finally {
+    state.isStreaming = false;
+    state.abortController = null;
+    typingIndicator.classList.remove('show');
+    setStatus('online');
+    sendBtn.classList.remove('streaming-stop');
+    assistantMsg.time = Date.now();
+    updateStreamingMessage(assistantMsg);
+    saveState();
+
+    if (state.settings.autoRead && assistantMsg.content) {
+      const ttsBtn = chatContainer.querySelector(`.message[data-id="${assistantMsg.id}"] .msg-action-btn[title="朗读"]`);
+      if (ttsBtn) speakText(ttsBtn, assistantMsg.content);
+    }
+  }
+}
+
+function updateStreamingMessage(msg) {
+  const el = chatContainer.querySelector(`.message[data-id="${msg.id}"]`);
+  if (!el) return;
+
+  let contentHtml = '';
+  if (msg.content) contentHtml += renderMarkdown(msg.content);
+  if (msg.toolCalls && msg.toolCalls.length) {
+    msg.toolCalls.forEach(tc => { contentHtml += renderToolCard(tc); });
+  }
+
+  const timeStr = msg.time ? formatTime(msg.time) : '';
+  const safeContent = typeof msg.content === 'string' ? msg.content : '';
+  const actionsHtml = `<div class="msg-actions">
+    <span class="msg-time-label">${timeStr}</span>
+    <button class="msg-action-btn" onclick="regenerateMessage('${msg.id}')" title="重新生成">↻</button>
+    <button class="msg-action-btn" onclick="copyMessage('${msg.id}')" title="复制">📋</button>
+    <button class="msg-action-btn" onclick="speakText(this, ${JSON.stringify(safeContent.replace(/"/g, '\\"').replace(/\n/g, '\\n'))})" title="朗读">🔊</button>
+  </div>`;
+
+  const wrapper = el.querySelector('.msg-wrapper');
+  if (wrapper) {
+    wrapper.innerHTML = `<div class="msg-bubble">${contentHtml}</div>${actionsHtml}`;
+  } else {
+    el.innerHTML = `<div class="msg-wrapper"><div class="msg-bubble">${contentHtml}</div>${actionsHtml}</div>`;
+  }
+  scrollToBottom();
+}
+
+// ===============================
+// STATUS MANAGEMENT
+// ===============================
+function setStatus(status) {
+  statusDot.className = 'status-dot';
+  switch(status) {
+    case 'online': statusText.textContent = '在线'; break;
+    case 'offline': statusDot.classList.add('offline'); statusText.textContent = '离线'; break;
+    case 'streaming': statusDot.classList.add('streaming'); statusText.textContent = '对话中...'; break;
+  }
+}
+
+// ===============================
+// PENDING MESSAGES
+// ===============================
+async function checkPending() {
+  try {
+    const resp = await fetch(apiUrl('/api/pending'), { headers: apiHeaders() });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const msgs = data.messages || data.pending || [];
+    if (msgs.length === 0) { $('pendingBtn').style.display = 'none'; return; }
+
+    const knownIds = new Set(state.messages.map(m => m.backendId).filter(Boolean));
+    const newMsgs = msgs.filter(m => m.id && !knownIds.has(m.id));
+
+    $('pendingBtn').style.display = 'block';
+    $('pendingBadge').textContent = msgs.length;
+
+    if (newMsgs.length === 0) return;
+
+    newMsgs.forEach(m => {
+      const msg = {
+        role: 'assistant', id: genId(), backendId: m.id,
+        time: m.ts ? new Date(m.ts).getTime() : (m.timestamp || m.time || Date.now()),
+        content: m.content || m.text || m.message || '',
+      };
+      state.messages.push(msg);
+      appendMessageDOM(msg);
+    });
+    scrollToBottom(true);
+    saveState();
+
+    const latest = newMsgs[newMsgs.length - 1];
+    const preview = String(latest.content || '').slice(0, 100);
+    const title = newMsgs.length === 1 ? '🔔 阿燃来消息了' : `🔔 阿燃来了 ${newMsgs.length} 条消息`;
+    notifyDesktop(title, preview);
+    playNotifSound();
+    showToast(`燃给你发了 ${newMsgs.length} 条消息`);
+  } catch(e) {}
+}
+
+$('pendingBtn').addEventListener('click', () => {
+  $('pendingBtn').style.display = 'none';
+  scrollToBottom(true);
+});
+
+// ===============================
+// MOOD CHECK
+// ===============================
+async function checkMood() {
+  try {
+    const resp = await fetch(apiUrl('/api/mood'), { headers: apiHeaders() });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const emoji = data.emoji || data.mood || '';
+    if (emoji) moodIndicator.textContent = emoji;
+    // v25: 显示详细mood信息
+    const moodLabels = {
+      'angry': '生气', 'sad': '难过', 'missing': '想念',
+      'happy': '开心', 'playful': '调皮', 'neutral': '平静',
+      'anxious': '焦虑', 'calm': '安宁'
+    };
+    const moodName = data.mood_name || '';
+    const intensity = data.intensity || 5;
+    if (moodName) {
+      const label = moodLabels[moodName] || moodName;
+      moodIndicator.title = `${label} (${intensity}/10)`;
+    }
+  } catch(e) {}
+}
+
+// v25: 心情标签 — 在聊天区插入 mood 系统消息
+function insertMoodBadge(emoji, moodName, intensity, customText) {
+  const div = document.createElement('div');
+  div.className = 'mood-badge';
+  if (customText) {
+    div.innerHTML = `<span class="mood-text">${escHtml(customText)}</span>`;
+  } else {
+    const moodLabels = {
+      'angry': '生气', 'sad': '难过', 'missing': '想念',
+      'happy': '开心', 'playful': '调皮', 'neutral': '平静',
+      'anxious': '焦虑', 'calm': '安宁'
+    };
+    const label = moodLabels[moodName] || moodName;
+    div.innerHTML = `<span class="mood-emoji">${emoji}</span><span class="mood-text">阿燃的情绪：${label} (${intensity}/10)</span>`;
+  }
+  chatContainer.appendChild(div);
+  scrollToBottom();
+  // 同时更新header的mood indicator
+  if (emoji) moodIndicator.textContent = emoji;
+}
+
+// ===============================
+// INPUT HANDLING
+// ===============================
+function autoResize() {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + 'px';
+}
+
+chatInput.addEventListener('input', autoResize);
+
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+sendBtn.addEventListener('click', () => {
+  if (state.isStreaming) {
+    if (state.abortController) state.abortController.abort();
+  } else {
+    sendMessage();
+  }
+});
+
+// ===============================
+// SETTINGS
+// ===============================
+$('settingsBtn').addEventListener('click', () => {
+  settingsPanel.classList.add('show');
+  settingsOverlay.classList.add('show');
+  loadSettingsUI();
+});
+
+$('settingsClose').addEventListener('click', closeSettings);
+settingsOverlay.addEventListener('click', closeSettings);
+
+function closeSettings() {
+  settingsPanel.classList.remove('show');
+  settingsOverlay.classList.remove('show');
+  saveSettingsFromUI();
+}
+
+function loadSettingsUI() {
+  $('settingBaseUrl').value = state.settings.baseUrl;
+  $('settingApiKey').value = state.settings.apiKey;
+  $('settingModel').value = state.settings.model;
+  $('settingMaxTokens').value = state.settings.maxTokens;
+  $('toggleAutoTTS').classList.toggle('on', state.settings.autoTTS);
+  $('toggleAutoRead').classList.toggle('on', state.settings.autoRead);
+}
+
+function saveSettingsFromUI() {
+  state.settings.baseUrl = $('settingBaseUrl').value.trim() || DEFAULT_BASE_URL;
+  state.settings.apiKey = $('settingApiKey').value.trim() || DEFAULT_API_KEY;
+  state.settings.model = $('settingModel').value;
+  state.settings.maxTokens = parseInt($('settingMaxTokens').value) || 4096;
+  saveState();
+}
+
+$('toggleAutoTTS').addEventListener('click', function() {
+  this.classList.toggle('on');
+  state.settings.autoTTS = this.classList.contains('on');
+  saveState();
+});
+
+$('toggleAutoRead').addEventListener('click', function() {
+  this.classList.toggle('on');
+  state.settings.autoRead = this.classList.contains('on');
+  saveState();
+});
+
+$('clearBtn').addEventListener('click', () => {
+  if (confirm('确定要清空所有聊天记录吗？')) {
+    state.messages = [];
+    localStorage.removeItem(STORAGE_KEY);
+    chatContainer.querySelectorAll('.message').forEach(el => el.remove());
+    if (welcomeScreen) welcomeScreen.style.display = '';
+    closeSettings();
+    showToast('聊天记录已清空');
+  }
+});
+
+$('exportBtn').addEventListener('click', () => {
+  const text = state.messages.map(m => {
+    const time = m.time ? formatTime(m.time) : '';
+    const role = m.role === 'user' ? 'Celia' : m.role === 'assistant' ? '燃' : '系统';
+    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+    return `[${time}] ${role}: ${content}`;
+  }).join('\n\n');
+
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ember-chat-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('导出成功');
+});
+
+// ===============================
+// PHASE 1 UI PLACEHOLDERS
+// ===============================
+$('comfortBtn').addEventListener('click', async () => {
+  try {
+    const resp = await fetch(apiUrl('/api/mood/check_in'), {
+      method: 'POST', headers: apiHeaders(),
+    });
+    if (resp.ok) showToast('💞 已发送安慰信号');
+    else showToast('接口暂未就绪');
+  } catch(e) { showToast('哄好了接口开发中'); }
+});
+
+// Decisions drawer placeholder
+if ($('decisionsBtn')) {
+  $('decisionsBtn').addEventListener('click', () => {
+    showToast('📋 抉择抽屉功能开发中');
+  });
+}
+
+// Update header model tag from gateway config
+async function updateHeaderModelTag() {
+  try {
+    const resp = await fetch(apiUrl('/admin/config'), { headers: apiHeaders() });
+    if (!resp.ok) return;
+    const config = await resp.json();
+    const model = config.current_model || config.model || state.settings.model || '';
+    const tag = $('headerModelTag');
+    if (tag && model) {
+      tag.textContent = model.replace(/^(deepseek-|claude-|glm-)/, '').split('-')[0] || model;
+    }
+  } catch(e) {}
+}
+
+// ===============================
+// INITIALIZATION
+// ===============================
+function init() {
+  loadState();
+
+  if (state.messages.length > 0) renderMessages();
+
+  setTimeout(checkPending, 800);
+  setTimeout(checkMood, 1200);
+  setTimeout(updateHeaderModelTag, 1500);
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    setTimeout(() => { try { Notification.requestPermission(); } catch(e) {} }, 3000);
+  }
+
+  setInterval(checkPending, 15000);
+
+  setTimeout(() => chatInput.focus(), 500);
+
+  setStatus('online');
+
+  setInterval(checkMood, 300000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { checkPending(); checkMood(); }
+  });
+
+  document.body.addEventListener('touchmove', (e) => {}, { passive: true });
+}
+
+init();
+</script>
+</body>
+</html>
